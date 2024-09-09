@@ -5,14 +5,14 @@ export async function getAllTasks() {
   return db.all('SELECT * FROM tasks');
 }
 
-export async function addTask(text: string, completed: boolean) {
+export async function addTask(text: string, state?: string) {
   const db = await openDb();
   const result = await db.run(
-    'INSERT INTO tasks (text, completed) VALUES (?, ?)',
+    'INSERT INTO tasks (text, state) VALUES (?, ?)',
     text,
-    completed
+    state
   );
-  return { id: result.lastID, text, completed: completed };
+  return { id: result.lastID, text, state };
 }
 
 // Add other functions for update and delete

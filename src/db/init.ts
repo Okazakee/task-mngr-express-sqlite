@@ -6,7 +6,7 @@ async function initDb() {
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       text TEXT NOT NULL,
-      completed BOOLEAN NOT NULL DEFAULT 0
+      state TEXT NOT NULL
     )
   `);
   console.log('Database initialized');
