@@ -1,35 +1,49 @@
 import express from 'express';
-import { getAllTasks, addTask } from '../models/taskModel';
+import { getAllTasks, addTask, removeTask, editTask } from '../models/taskModel';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   const tasks = await getAllTasks();
-  res.json(tasks);
+  res.json(tasks.reverse());
+  console.log('Got all the tasks!')
 });
 
 router.post('/', async (req, res) => {
-  const { text, state } = req.body;
-
-  const validStates = ['done', 'pending', 'on-hold'];
-
-  // Validate the state value
-  if (!state) {
-    const newTask = await addTask(text, 'pending'); //set default value
-    res.status(201).json(newTask);
-    return
-  } else if (!validStates.includes(state)) {
-    return res.status(422).json({ error: 'Invalid state value' });
-  }
+  const { text, status } = req.body;
 
   try {
-    const newTask = await addTask(text, state);
+    const newTask = await addTask(text, status);
     res.status(201).json(newTask);
+    console.log('Added task: ' + 'text: ' + text + ', status: ' + status)
   } catch (error) {
     res.status(500).json({ error: 'Failed to add task: ' + error });
   }
 });
 
-// Add other routes for update and delete
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await removeTask(parseInt(id, 10));
+    res.status(200).json({ message: `Deleted task N. ${id}` });
+    console.log('Deleted task N. ' + id)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete task: ' + error });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { text, status } = req.body;
+
+  try {
+    const updatedTask = await editTask(parseInt(id, 10), text, status);
+    res.status(201).json('Updated task: ' + 'text: ' + text + ', status: ' + status);
+    console.log('Updated task: ' + 'text: ' + text + ', status: ' + status)
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to edit task: ' + error });
+  }
+});
 
 export default router;

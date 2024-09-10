@@ -5,14 +5,32 @@ export async function getAllTasks() {
   return db.all('SELECT * FROM tasks');
 }
 
-export async function addTask(text: string, state?: string) {
+export async function addTask(text: string, status?: string) {
   const db = await openDb();
   const result = await db.run(
-    'INSERT INTO tasks (text, state) VALUES (?, ?)',
+    'INSERT INTO tasks (text, status) VALUES (?, ?)',
     text,
-    state
+    status ? status : 'pending'
   );
-  return { id: result.lastID, text, state };
+  return { id: result.lastID, text, status };
 }
 
-// Add other functions for update and delete
+export async function editTask(id: number, text: string, status?: string) {
+  const db = await openDb();
+  const result = await db.run(
+    'UPDATE tasks SET text = ?, status = ? WHERE id = ?',
+    text,
+    status ? status : 'pending',
+    id
+  );
+  return `Correctly deleted task N. ${id}`;
+}
+
+export async function removeTask(id: number) {
+  const db = await openDb();
+  const result = await db.run(
+    'DELETE FROM tasks WHERE id = ?',
+    id
+  );
+  return `Correctly deleted task N. ${id}`;
+}
