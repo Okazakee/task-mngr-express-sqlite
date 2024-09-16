@@ -1,9 +1,10 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { getTasks, addTask, removeTask, editTask, spawnTasks, getTask, getAllTasks } from '../models/taskModel';
+import { body, param, validationResult } from 'express-validator';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/tasks', async (req, res) => {
 
   const limit = parseInt(req.query.limit as string) || 10;
   const page = parseInt(req.query.page as string) || 0;
@@ -28,7 +29,22 @@ router.get('/spawn', async (req, res) => {
   console.log('Spawned 12 tasks!')
 });
 
-router.post('/', async (req, res) => {
+router.post('/tasks', [
+  body('text')
+    .trim()
+    .escape()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('Text must be between 1 and 1000 characters'),
+  body('status')
+    .isIn(['pending', 'done', 'on-hold'])
+    .withMessage('Invalid status value'),
+], async (req: Request, res: Response) => {
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { text, status } = req.body;
 
   try {
@@ -40,7 +56,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/tasks/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -52,7 +68,22 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/tasks/:id', [
+  body('text')
+    .trim()
+    .escape()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('Text must be between 1 and 1000 characters'),
+  body('status')
+    .isIn(['pending', 'done', 'on-hold'])
+    .withMessage('Invalid status value'),
+], async (req: Request, res: Response) => {
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { id } = req.params;
   const { text, status } = req.body;
 
