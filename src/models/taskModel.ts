@@ -5,6 +5,7 @@ export async function getAllTasks() {
 
   return await db.all('SELECT * FROM tasks');
 }
+
 export async function getTasks(limit: number, offset: number) {
   const db = await openDb();
 

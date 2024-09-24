@@ -1,10 +1,12 @@
 import express, { Request, Response } from 'express';
 import { getTasks, addTask, removeTask, editTask, spawnTasks, getTask, getAllTasks } from '../models/taskModel';
-import { body, param, validationResult } from 'express-validator';
+import { body, validationResult } from 'express-validator';
 
 const router = express.Router();
 
-router.get('/tasks', async (req, res) => {
+//TODO edit all those and task model to check user id by username before proceeding
+
+router.get('/tasks', async (req: Request, res: Response) => {
 
   const limit = parseInt(req.query.limit as string) || 10;
   const page = parseInt(req.query.page as string) || 0;
@@ -23,7 +25,7 @@ router.get('/tasks', async (req, res) => {
   console.log('Got tasks!')
 });
 
-router.get('/spawn', async (req, res) => {
+router.get('/spawn', async (req: Request, res: Response) => {
   const tasks = await spawnTasks();
   res.json('Spawned 12 tasks!');
   console.log('Spawned 12 tasks!')
@@ -56,7 +58,7 @@ router.post('/tasks', [
   }
 });
 
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
