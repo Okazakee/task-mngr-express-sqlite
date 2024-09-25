@@ -1,6 +1,7 @@
 import { openDb } from '../db/database';
 
 interface User {
+  username: string;
   id: number;
   email: string;
   password: string;

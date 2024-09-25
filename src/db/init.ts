@@ -26,12 +26,12 @@ async function initDb() {
   `);
 
   // Hash the password before inserting into the database
-  const hashedPassword = await bcrypt.hash('testpw123', 10);
+  const hashedPassword = await bcrypt.hash('123', 10);
 
   // Insert a fixed user with an email, username, and hashed password
   await db.run(`
     INSERT INTO users (email, username, password)
-    VALUES ('user@example.com', 'fixeduser', ?);
+    VALUES ('user@example.com', 'user', ?);
   `, [hashedPassword]);
 
   // Retrieve the ID of the inserted user

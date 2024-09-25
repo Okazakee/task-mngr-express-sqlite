@@ -1,116 +1,52 @@
-import express, { Request, Response } from 'express';
-import { getTasks, addTask, removeTask, editTask, spawnTasks, getTask, getAllTasks } from '../models/taskModel';
-import { body, validationResult } from 'express-validator';
+import { Router } from 'express';
+import * as taskModel from '../models/taskModel';
+import { Request } from 'express';
 
-const router = express.Router();
+const router = Router();
 
-//TODO edit all those and task model to check user id by username before proceeding
-
-router.get('/tasks', async (req: Request, res: Response) => {
-
-  const limit = parseInt(req.query.limit as string) || 10;
-  const page = parseInt(req.query.page as string) || 0;
-  const offset = page * limit;
-
-  const tasks = await getTasks(limit, offset);
-  const allTasksQuery = await getAllTasks();
-  const totalTasks = allTasksQuery.length;
-
-  res.json({
-    tasks,
-    totalTasks,
-    hasNextPage: offset + limit < totalTasks,
-  });
-
-  console.log('Got tasks!')
+// Get all tasks for the authenticated user
+router.get('/', async (req: Request, res) => {
+  const userId = req.user?.id; // Assuming user ID is stored in req.user after JWT verification
+  const tasks = await taskModel.getAllTasks(userId);
+  res.json(tasks);
 });
 
-router.get('/spawn', async (req: Request, res: Response) => {
-  const tasks = await spawnTasks();
-  res.json('Spawned 12 tasks!');
-  console.log('Spawned 12 tasks!')
+// Get paginated tasks for the authenticated user
+router.get('/page', async (req: Request, res) => {
+  const userId = req.user?.id;
+  const { limit, offset } = req.query;
+  const tasks = await taskModel.getTasks(userId, Number(limit), Number(offset));
+  res.json(tasks);
 });
 
-router.post('/tasks', [
-  body('text')
-    .trim()
-    .escape()
-    .isLength({ min: 1, max: 1000 })
-    .withMessage('Text must be between 1 and 1000 characters'),
-  body('status')
-    .isIn(['pending', 'done', 'on-hold'])
-    .withMessage('Invalid status value'),
-], async (req: Request, res: Response) => {
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+// Add a task for the authenticated user
+router.post('/', async (req: Request, res) => {
+  const userId = req.user?.id;
   const { text, status } = req.body;
-
-  try {
-    const newTask = await addTask(text, status);
-    res.status(201).json(newTask);
-    console.log('Added task: ' + 'text: ' + text + ', status: ' + status)
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to add task: ' + error });
-  }
+  const newTask = await taskModel.addTask(userId, text, status);
+  res.status(201).json(newTask);
 });
 
-router.delete('/tasks/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-
-  try {
-    await removeTask(parseInt(id, 10));
-    res.status(200).json({ message: `Deleted task N. ${id}` });
-    console.log('Deleted task N. ' + id)
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete task: ' + error });
-  }
+// Get a specific task for the authenticated user
+router.get('/:id', async (req: Request, res) => {
+  const userId = req.user?.id;
+  const task = await taskModel.getTask(userId, Number(req.params.id));
+  res.json(task);
 });
 
-router.put('/tasks/:id', [
-  body('text')
-    .trim()
-    .escape()
-    .isLength({ min: 1, max: 1000 })
-    .withMessage('Text must be between 1 and 1000 characters'),
-  body('status')
-    .isIn(['pending', 'done', 'on-hold'])
-    .withMessage('Invalid status value'),
-], async (req: Request, res: Response) => {
-
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { id } = req.params;
+// Edit a task for the authenticated user
+router.put('/:id', async (req: Request, res) => {
+  const userId = req.user?.id;
   const { text, status } = req.body;
+  await taskModel.editTask(userId, Number(req.params.id), text, status);
+  res.status(204).send();
+});
 
-  // check diffs
-  const task = await getTask(parseInt(id, 10));
-
-  const taskText = task[0].text;
-  const taskStatus = task[0].status;
-
-  if (!task) {
-    return res.status(404).json({ error: 'Task not found' });
-  }
-
-  if (taskText === text && taskStatus === status) {
-    res.status(304).json('No update needed for task.');
-  } else {
-    try {
-      await editTask(parseInt(id, 10), text, status);
-      res.status(200).json('Updated task: ' + 'text: ' + text + ', status: ' + status);
-      console.log('Updated task: ' + 'text: ' + text + ', status: ' + status)
-    } catch (error) {
-      res.status(500).json({ error: 'Failed to edit task: ' + error });
-    }
-  }
-
+// Remove a task for the authenticated user
+router.delete('/:id', async (req: Request, res) => {
+  const userId = req.user?.id;
+  await taskModel.removeTask(userId, Number(req.params.id));
+  res.status(204).send();
 });
 
 export default router;

@@ -1,93 +1,68 @@
 import { openDb } from '../db/database';
 
-export async function getAllTasks() {
+// Get all tasks for a specific user
+export async function getAllTasks(userId: number) {
   const db = await openDb();
-
-  return await db.all('SELECT * FROM tasks');
+  return await db.all('SELECT * FROM tasks WHERE user_id = ?', [userId]);
 }
 
-export async function getTasks(limit: number, offset: number) {
+// Get tasks with pagination for a specific user
+export async function getTasks(userId: number, limit: number, offset: number) {
   const db = await openDb();
-
-  return await db.all('SELECT * FROM tasks ORDER BY id DESC LIMIT ? OFFSET ?',
-    [limit, offset]
+  return await db.all('SELECT * FROM tasks WHERE user_id = ? ORDER BY id DESC LIMIT ? OFFSET ?',
+    [userId, limit, offset]
   );
 }
 
-export async function addTask(text: string, status?: string) {
+// Add a task for a specific user
+export async function addTask(userId: number, text: string, status?: string) {
   const db = await openDb();
   const result = await db.run(
-    'INSERT INTO tasks (text, status) VALUES (?, ?)',
+    'INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)',
     text,
-    status ? status : 'pending'
+    status ? status : 'pending',
+    userId
   );
   return { id: result.lastID, text, status };
 }
 
-export async function getTask(id: number) {
+// Get a specific task for a specific user
+export async function getTask(userId: number, id: number) {
   const db = await openDb();
-
-  return await db.all('SELECT * FROM tasks WHERE id = ?',
-    id
+  return await db.all('SELECT * FROM tasks WHERE user_id = ? AND id = ?',
+    [userId, id]
   );
 }
 
-export async function editTask(id: number, text: string, status?: string) {
+// Edit a task for a specific user
+export async function editTask(userId: number, id: number, text: string, status?: string) {
   const db = await openDb();
-
   return await db.run(
-    'UPDATE tasks SET text = ?, status = ? WHERE id = ?',
+    'UPDATE tasks SET text = ?, status = ? WHERE id = ? AND user_id = ?',
     text,
     status ? status : 'pending',
-    id
+    id,
+    userId
   );
 }
 
-export async function removeTask(id: number) {
+// Remove a task for a specific user
+export async function removeTask(userId: number, id: number) {
   const db = await openDb();
   return await db.run(
-    'DELETE FROM tasks WHERE id = ?',
-    id
+    'DELETE FROM tasks WHERE id = ? AND user_id = ?',
+    [id, userId]
   );
 }
 
+// Spawn tasks for testing (optional: consider adding userId here)
 export async function spawnTasks() {
   const db = await openDb();
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task1', 'done');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task2', 'on-hold');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task3', 'pending');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task4', 'done');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task5', 'on-hold');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task6', 'pending');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task7', 'done');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task8', 'on-hold');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task9', 'pending');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task10', 'done');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task11', 'on-hold');
-  `);
-  await db.run(`
-    INSERT INTO tasks (text, status) VALUES ('task12', 'pending');
-  `);
-  return `Correctly spawned 12 tasks`;
+  // Consider using userId when inserting test tasks
+  // Example userId could be 1 for all tasks
+  const userId = 1; // This should ideally be dynamic
+  await db.run('INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)', 'task1', 'done', userId);
+  await db.run('INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)', 'task2', 'on-hold', userId);
+  // Add more tasks as needed...
+  return `Correctly spawned tasks for userId ${userId}`;
 }

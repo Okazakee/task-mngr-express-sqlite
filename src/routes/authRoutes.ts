@@ -3,20 +3,25 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { checkAvaliability, loginUser, registerUser } from '../models/authModel';
 import bcrypt from 'bcrypt';
 import { authenticateJWT } from '../services/authMiddleware';
+import { jwtSecret } from '../app';
 
 const router = express.Router();
 
-const jwtSecret = process.env.JWT_SECRET!;
-
 declare module 'express' {
   export interface Request {
-    user?: string | JwtPayload;
+    user?: JwtPayload;
   }
 }
 
 // authjwt here is needed to authenticate the verify route and use middleware to validate, hacky but works
 router.get('/verify', authenticateJWT, (req: Request, res: Response) => {
-  res.status(200).json({ message: 'Token is valid', user: req.user });
+  const jwtPayloadValid = req.user;
+
+  if (!jwtPayloadValid) {
+    res.status(400).json({ message: 'Jwt is not valid' })
+  }
+
+  res.status(200).json({ message: 'Token is valid' });
 });
 
 router.post('/register', async (req: Request, res: Response) => {
@@ -47,9 +52,9 @@ router.post('/login', async (req: Request, res: Response) => {
 
   //return jwt to the user
   const token = jwt.sign(
-    { id: user.id, email: user.email }, // Payload
-    jwtSecret,                          // Secret
-    { expiresIn: '100h' }               // Token expiry
+    { id: user.id, username: user.username },   // Payload
+    jwtSecret as string,                        // Secret
+    { expiresIn: '100h' }                       // Token expiry
   );
 
   res.json({ token });

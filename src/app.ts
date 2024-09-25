@@ -18,6 +18,7 @@ const app = express();
 
 const localhost = process.env.LOCAL_HOST_URL;
 const exposed = process.env.EXPOSED_HOST_URL;
+export const jwtSecret = process.env.JWT_SECRET;
 
 app.use(limiter);
 
