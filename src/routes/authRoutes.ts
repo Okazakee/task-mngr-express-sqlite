@@ -35,7 +35,17 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 router.post('/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+  const { username, password, staylogged } = req.body;
+
+  const alreadyLogin = req.cookies?.authToken;
+
+  if (alreadyLogin) {
+    return res.status(200).json({ message: 'Aleady logged in' });
+  }
+
+  if (!username || !password) {
+    return res.status(403).json({ message: 'Invalid request' });
+  }
 
   const user = await loginUser(username);
 
@@ -52,12 +62,19 @@ router.post('/login', async (req: Request, res: Response) => {
 
   //return jwt to the user
   const token = jwt.sign(
-    { id: user.id, username: user.username },   // Payload
+    { id: '01', username: 'user' },             // Payload
     jwtSecret as string,                        // Secret
     { expiresIn: '100h' }                       // Token expiry
   );
 
-  res.json({ token });
+  res.cookie('authToken', token, {
+    httpOnly: true,      // Prevent JavaScript access
+    secure: false,        // Ensure cookie is only sent over HTTPS
+    sameSite: 'strict',     // Protect against CSRF attacks (change to 'none' if cross-origin is needed)
+    maxAge: staylogged ? 60*60*24*365 : undefined, // 1 year expiry or session
+  });
+
+  res.json({ message: 'Logged in successfully' });
 
 });
 

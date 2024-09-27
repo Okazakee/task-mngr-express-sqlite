@@ -18,7 +18,7 @@ export async function getTasks(userId: number, limit: number, offset: number) {
 export async function addTask(userId: number, text: string, status?: string) {
   const db = await openDb();
   const result = await db.run(
-    'INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)',
+    'INSERT INTO tasks (text, status, user_id) VALUES (?, ?, ?)',
     text,
     status ? status : 'pending',
     userId
@@ -61,8 +61,8 @@ export async function spawnTasks() {
   // Consider using userId when inserting test tasks
   // Example userId could be 1 for all tasks
   const userId = 1; // This should ideally be dynamic
-  await db.run('INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)', 'task1', 'done', userId);
-  await db.run('INSERT INTO tasks (text, status, userId) VALUES (?, ?, ?)', 'task2', 'on-hold', userId);
+  await db.run('INSERT INTO tasks (text, status, user_id) VALUES (?, ?, ?)', 'task1', 'done', userId);
+  await db.run('INSERT INTO tasks (text, status, user_id) VALUES (?, ?, ?)', 'task2', 'on-hold', userId);
   // Add more tasks as needed...
   return `Correctly spawned tasks for userId ${userId}`;
 }

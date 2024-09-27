@@ -9,14 +9,12 @@ declare module 'express' {
 }
 
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.split(' ')[1]; // auth has "Bearer" before token
 
-  try {
+    const token = req.cookies?.authToken; // jwt taken from cookies
 
     if (!token) {
-      throw new Error
+      return res.status(401).json({ message: 'No token provided' });
     }
-
 
     const decoded = jwt.verify(token, jwtSecret as string) as JwtPayload; // Verify token
 
@@ -31,11 +29,8 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
       req.user.username.length === 0;
 
     if (invalidJWT) {
-      throw new Error
+      return res.status(403).json({ message: 'Invalid or expired token' });
     }
 
     next();  // Proceed to the next middleware or route handler
-  } catch (err) {
-    return res.status(403).json({ message: 'Invalid or expired token' });
-  }
 };

@@ -29,8 +29,10 @@ export async function registerUser(email: string, username: string, hashedPasswo
 export async function loginUser(username: string): Promise<User> {
   const db = await openDb();
 
-  return await db.all(
-    'SELECT * FROM users WHERE email = ?',
+  const user = await db.all(
+    'SELECT * FROM users WHERE username = ?',
     [username]
   );
+
+  return user[0];
 };

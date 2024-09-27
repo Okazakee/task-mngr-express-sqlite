@@ -13,6 +13,7 @@ const limiter = rateLimit({
 });
 
 require('dotenv').config({ path: '../.env.local' });
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -26,8 +27,10 @@ app.use(limiter);
 app.use(cors({
   origin: [localhost!, exposed!],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  credentials: true
 }));
+
+app.use(cookieParser());
 
 app.use(express.json());
 

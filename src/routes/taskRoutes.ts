@@ -14,9 +14,22 @@ router.get('/', async (req: Request, res) => {
 // Get paginated tasks for the authenticated user
 router.get('/page', async (req: Request, res) => {
   const userId = req.user?.id;
-  const { limit, offset } = req.query;
+
+  const limit = parseInt(req.query.limit as string) || 10;
+  const page = parseInt(req.query.page as string) || 0;
+  const offset = page * limit;
+
   const tasks = await taskModel.getTasks(userId, Number(limit), Number(offset));
-  res.json(tasks);
+
+  const allTasksQuery = await taskModel.getAllTasks(userId);
+
+  const totalTasks = allTasksQuery.length;
+
+  res.json({
+    tasks,
+    totalTasks,
+    hasNextPage: offset + limit < totalTasks,
+  });
 });
 
 // Add a task for the authenticated user
@@ -37,8 +50,9 @@ router.get('/:id', async (req: Request, res) => {
 // Edit a task for the authenticated user
 router.put('/:id', async (req: Request, res) => {
   const userId = req.user?.id;
-  const { text, status } = req.body;
-  await taskModel.editTask(userId, Number(req.params.id), text, status);
+  const username = req.user?.username
+  const { id, text, status } = req.body;
+  await taskModel.editTask(userId, id, text, status);
   res.status(204).send();
 });
 
