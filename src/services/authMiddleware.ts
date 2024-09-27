@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { jwtSecret } from '../app';
+import { jwtSecret } from './envsExports';
 
 declare module 'express' {
   export interface Request {
@@ -22,13 +22,13 @@ export const authenticateJWT = (req: Request, res: Response, next: NextFunction)
 
     // check jwt has user id and username
 
-    const invalidJWT = !req.user ||
-      typeof req.user.id !== 'string' ||
-      req.user.id.length === 0 ||
-      typeof req.user.username !== 'string' ||
-      req.user.username.length === 0;
+    const validJWT = req.user &&
+    typeof req.user.id === 'number' &&
+    req.user.id > 0 &&
+    typeof req.user.username === 'string' &&
+    req.user.username.length > 0;
 
-    if (invalidJWT) {
+    if (!validJWT) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
 

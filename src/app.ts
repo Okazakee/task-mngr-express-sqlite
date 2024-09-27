@@ -5,6 +5,7 @@ import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
 import { rateLimit } from 'express-rate-limit';
 import { authenticateJWT } from './services/authMiddleware';
+import { localhost, exposed } from './services/envsExports';
 
 // global rate limit
 const limiter = rateLimit({
@@ -12,14 +13,9 @@ const limiter = rateLimit({
   max: 5, // limit each IP to 10 requests per windowMs
 });
 
-require('dotenv').config({ path: '../.env.local' });
 const cookieParser = require('cookie-parser');
 
 const app = express();
-
-const localhost = process.env.LOCAL_HOST_URL;
-const exposed = process.env.EXPOSED_HOST_URL;
-export const jwtSecret = process.env.JWT_SECRET;
 
 app.use(limiter);
 
