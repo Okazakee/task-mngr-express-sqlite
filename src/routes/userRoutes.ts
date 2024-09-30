@@ -26,4 +26,10 @@ router.post('/upload-propic', authenticateJWT, upload.single('propic'), async (r
   }
 });
 
+// change username
+
+// change email
+
+// change pw
+
 export default router;

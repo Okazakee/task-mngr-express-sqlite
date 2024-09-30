@@ -19,17 +19,17 @@ router.get('/verify', authenticateJWT, (req: Request, res: Response) => {
   const jwtPayloadValid = req.user;
 
   if (!jwtPayloadValid) {
-    res.status(400).json({ message: 'Token is not valid' })
+    return res.status(400).json({ message: 'Token is not valid' })
   }
 
   res.cookie('localAuth', true, {
     httpOnly: false,                                // not needed, this will be used by client to check
     secure: production ? true : false,              // token validity only once a day
     sameSite: 'strict',
-    maxAge: 60*60*24*1,
+    maxAge: 86400000,
   })
 
-  res.status(200).json({ message: 'Token is valid' });
+  return res.status(200).json({ message: 'Token is valid' });
 });
 
 router.get('/logout', authenticateJWT, (req: Request, res: Response) => {
@@ -41,16 +41,36 @@ router.get('/logout', authenticateJWT, (req: Request, res: Response) => {
     maxAge: 0,
   });
 
-  res.status(200).json({ message: 'Logged out successfully' });
+  return res.status(200).json({ message: 'Logged out successfully' });
 });
 
 router.post('/register', async (req: Request, res: Response) => {
   const { email, username, password } = req.body;
 
-  const alreadyLogin = req.cookies?.authToken;
+  const authToken = req.cookies?.authToken;
 
-  if (alreadyLogin) {
+  let valid: boolean;
+
+  try {
+    // Attempt to verify the token
+    jwt.verify(authToken, jwtSecret as string) as JwtPayload;
+    valid = true;
+  } catch (error) {
+    valid = false;
+  }
+
+  if (valid) {
     return res.status(200).json({ message: 'Aleady logged in' });
+  }
+
+  if (!username || !password || !email) {
+    return res.status(403).json({ message: 'Invalid request' });
+  }
+
+  const existingUser = await checkAvaliability(email, username);
+
+  if (existingUser) {
+    return res.status(400).json({ message: 'Email or username already exists' });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
@@ -58,13 +78,13 @@ router.post('/register', async (req: Request, res: Response) => {
   // Save user to the database
   await registerUser(email, username, hashedPassword);
 
-  res.status(201).json({ message: 'Registration successful' });
+  return res.status(201).json({ message: 'Registration successful' });
 });
 
 router.post('/login', async (req: Request, res: Response) => {
   const { username, password, staylogged } = req.body;
 
-  const alreadyLogin = req.cookies?.authToken;
+  const authToken = req.cookies?.authToken;
 
   if (!username || !password) {
     return res.status(403).json({ message: 'Invalid request' });
@@ -76,7 +96,7 @@ router.post('/login', async (req: Request, res: Response) => {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  if (alreadyLogin) {
+  if (authToken) {
     return res.status(200).json({ message: 'Aleady logged in', username, email: user.email });
   }
 
@@ -91,7 +111,7 @@ router.post('/login', async (req: Request, res: Response) => {
   const token = jwt.sign(
     { id: user.id, username: user.username },       // Payload
     jwtSecret as string,                            // Secret
-    { expiresIn: staylogged ? '100h' : '5h' }       // Token expiry
+    { expiresIn: staylogged ? '1y' : '24h' }        // Token expiry
   );
 
   // send httponly cookie with jwt to client
@@ -100,7 +120,7 @@ router.post('/login', async (req: Request, res: Response) => {
     httpOnly: true,                                 // Prevent JavaScript access in client
     secure: production ? true : false,              // Ensure cookie is only sent over HTTPS (prod only)
     sameSite: 'strict',                             // Protect against CSRF attacks
-    maxAge: staylogged ? 60*60*24*365 : undefined,  // 1 year expiry or session
+    maxAge: staylogged ? 31536000000 : undefined,   // 1 year expiry or session
   });
 
   res.json({ message: 'Logged in successfully', username, email: user.email });
@@ -111,11 +131,11 @@ router.post('/check-availability', async (req: Request, res: Response) => {
   const { email, username } = req.body;
   const existingUser = await checkAvaliability(email, username);
 
-  if (existingUser.length > 0) {
+  if (existingUser) {
     return res.status(400).json({ message: 'Email or username already exists' });
   }
 
-  res.status(200).json({ message: 'Available' });
+  return res.status(200).json({ message: 'Available' });
 });
 
 export default router;

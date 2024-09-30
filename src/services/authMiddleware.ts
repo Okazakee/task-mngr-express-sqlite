@@ -10,27 +10,31 @@ declare module 'express' {
 
 export const authenticateJWT = (req: Request, res: Response, next: NextFunction) => {
 
-    const token = req.cookies?.authToken; // jwt taken from cookies
+  const token = req.cookies?.authToken;
 
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
-    }
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
 
-    const decoded = jwt.verify(token, jwtSecret as string) as JwtPayload; // Verify token
-
-    req.user = decoded;  // Attach decoded user info to the request object
-
-    // check jwt has user id and username
+  try {
+    const decoded = jwt.verify(token, jwtSecret as string) as JwtPayload;
+    req.user = decoded;
 
     const validJWT = req.user &&
-    typeof req.user.id === 'number' &&
-    req.user.id > 0 &&
-    typeof req.user.username === 'string' &&
-    req.user.username.length > 0;
+      typeof req.user.id === 'number' &&
+      req.user.id > 0 &&
+      typeof req.user.username === 'string' &&
+      req.user.username.length > 0;
 
     if (!validJWT) {
-      return res.status(403).json({ message: 'Invalid or expired token' });
+      return res.status(403).json({ message: 'Invalid token' });
     }
 
-    next();  // Proceed to the next middleware or route handler
+    next();
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ message: 'Token has expired' });
+    }
+    return res.status(403).json({ message: 'Invalid token' });
+  }
 };

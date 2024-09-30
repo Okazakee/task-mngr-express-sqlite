@@ -11,10 +11,12 @@ interface User {
 export async function checkAvaliability(email: string, username: string) {
   const db = await openDb();
 
-  return await db.all(
+  const user = await db.all(
     'SELECT * FROM users WHERE email = ? OR username = ?',
     [email, username]
   );
+
+  return user[0];
 };
 
 export async function registerUser(email: string, username: string, hashedPassword: string): Promise<User> {
