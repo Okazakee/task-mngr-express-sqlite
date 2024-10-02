@@ -8,6 +8,16 @@ interface User {
   propic?: Blob;
 }
 
+export async function getUsers() {
+  const db = await openDb();
+
+  const users = await db.all(
+    'SELECT id, username, email FROM users'
+  );
+
+  return users;
+};
+
 export async function checkAvaliability(email: string, username: string) {
   const db = await openDb();
 

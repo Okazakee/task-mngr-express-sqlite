@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { checkAvaliability, loginUser, registerUser } from '../models/authModel';
+import { checkAvaliability, loginUser, registerUser, getUsers } from '../models/authModel';
 import bcrypt from 'bcrypt';
 import { authenticateJWT } from '../services/authMiddleware';
 import { production, jwtSecret } from '../services/envsExports';
@@ -14,6 +14,13 @@ declare module 'express' {
 }
 
 // authjwt here is needed to authenticate the verify route and use middleware to validate, hacky but works
+
+router.get('/getUsers', authenticateJWT, async (req: Request, res: Response) => {
+
+  const users = await getUsers();
+
+  return res.status(200).json({ message: users });
+});
 
 router.get('/verify', authenticateJWT, (req: Request, res: Response) => {
   const jwtPayloadValid = req.user;
